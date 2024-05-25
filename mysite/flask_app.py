@@ -47,11 +47,15 @@ def generate_problems(difficulty, num_problems):
     levelproblems['Level 4'] = [[m, n] for m in [2,3,4,5,6,7,8,9,10,11,12] for n in range(1, 13)]
     levelproblems['Level 5'] = [[Decimal(10)**a*Decimal(m), Decimal(10)**b*Decimal(n)] for m in [2,3,4,5,6,7,8,9,10,11,12] for n in range(1, 13) for a in range(-1,2) for b in range(-1,2)]
 
-    previousProblem = []
+    # previousProblem = []
+    problemSet = levelproblems[difficulty].copy()
     for i in range(num_problems):
-        problem = random.choice(levelproblems[difficulty])
-        while problem == previousProblem:
-            problem = random.choice(levelproblems[difficulty])
+        if len(problemSet) == 0:
+            problemSet = levelproblems[difficulty].copy()
+        problem = random.choice(problemSet)
+        problemSet.remove(problem)
+        #while problem == previousProblem:
+        #    problem = random.choice(levelproblems[difficulty])
         previousProblem = problem
         x = problem[0]
         y = problem[1]
