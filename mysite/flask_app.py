@@ -5,6 +5,11 @@ import os
 
 app = Flask(__name__)
 
+@app.before_request
+def before_request():
+    if not request.is_secure:
+        return redirect(request.url.replace("http://", "https://", 1))
+        
 @app.route('/')
 def home():
     return render_template('difficulty.html')
