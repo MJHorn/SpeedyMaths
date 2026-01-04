@@ -7,13 +7,16 @@
     .attempt-chart {
       display: flex;
       align-items: flex-end;
+      justify-content: flex-start;
       height: 260px;
       border: 2px solid #333;
       background: #fff;
+      overflow-x: auto;
     }
 
     .attempt-bar {
-      flex: 1 1 0;
+      flex: 0 0 36px;
+      min-width: 36px;
       display: flex;
       align-items: flex-end;
       justify-content: center;
@@ -31,7 +34,7 @@
       top: 4px;
       left: 2px;
       right: 2px;
-      font-size: 0.8rem;
+      font-size: 0.95rem;
       text-align: center;
       color: #111;
       font-weight: bold;
@@ -40,10 +43,11 @@
 
     .bar-date {
       margin-top: 6px;
-      font-size: 0.75rem;
+      font-size: 0.9rem;
       text-align: center;
-      width: 100%;
-      display: block;
+      width: 36px;
+      display: inline-block;
+      white-space: nowrap;
     }
 
     .attempt-scale {
@@ -72,7 +76,7 @@
     </div>
     <div class="attempt-chart">
       {% for row in attempts %}
-      <span class="bar-date">{{ row["created_at"] }}</span>
+      <span class="bar-date">{{ row["created_at"].strftime("%d/%m %H:%M") }}</span>
       {% endfor %}
     </div>
   </div>
@@ -102,7 +106,7 @@
     </tr>
     {% for row in attempts %}
     <tr>
-      <td>{{ row["created_at"] }}</td>
+      <td>{{ row["created_at"].strftime("%d/%m/%Y %H:%M") }}</td>
       <td>{{ row["difficulty"] }}</td>
       <td>{{ row["score"] }} / {{ row["total"] }}</td>
     </tr>
