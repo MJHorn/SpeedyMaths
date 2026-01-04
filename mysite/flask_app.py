@@ -1,9 +1,84 @@
-from flask import Flask, render_template, request, redirect
+from flask import Flask, render_template, request, redirect, session, g, jsonify
 from decimal import Decimal
 import random
 import os
+import psycopg2
+from psycopg2.extras import RealDictCursor
+from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
+app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-key")
+
+def get_db_url():
+    db_url = os.environ.get("DATABASE_URL")
+    if not db_url:
+        return None
+    if db_url.startswith("postgres://"):
+        db_url = db_url.replace("postgres://", "postgresql://", 1)
+    return db_url
+
+def get_db():
+    if "db" not in g:
+        db_url = get_db_url()
+        if not db_url:
+            raise RuntimeError("DATABASE_URL is not set.")
+        g.db = psycopg2.connect(db_url, sslmode="require")
+    return g.db
+
+@app.teardown_appcontext
+def close_db(exception):
+    db = g.pop("db", None)
+    if db is not None:
+        db.close()
+
+def init_db():
+    db_url = get_db_url()
+    if not db_url:
+        return
+    conn = psycopg2.connect(db_url, sslmode="require")
+    try:
+        with conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS users (
+                        id SERIAL PRIMARY KEY,
+                        email TEXT UNIQUE NOT NULL,
+                        password_hash TEXT NOT NULL,
+                        created_at TIMESTAMP DEFAULT NOW()
+                    );
+                    """
+                )
+                cur.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS progress (
+                        id SERIAL PRIMARY KEY,
+                        user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                        difficulty TEXT NOT NULL,
+                        score INTEGER NOT NULL,
+                        total INTEGER NOT NULL,
+                        created_at TIMESTAMP DEFAULT NOW()
+                    );
+                    """
+                )
+    finally:
+        conn.close()
+
+@app.before_first_request
+def setup_database():
+    init_db()
+
+def login_required(view_func):
+    def wrapped(*args, **kwargs):
+        if not session.get("user_id"):
+            return redirect("/login")
+        return view_func(*args, **kwargs)
+    wrapped.__name__ = view_func.__name__
+    return wrapped
+
+@app.context_processor
+def inject_current_user():
+    return {"current_user_email": session.get("user_email")}
 
 @app.before_request
 def before_request():
@@ -21,7 +96,7 @@ def quiz():
         difficulty = request.form['difficulty']
         num_problems = 40
         problems = generate_problems(difficulty, num_problems)
-        return render_template('quiz_with_results.html', problems=problems)
+        return render_template('quiz_with_results.html', problems=problems, difficulty=difficulty)
     else:
         return render_template('difficulty.html')
 
@@ -37,7 +112,113 @@ def score():
         results.append(result)
         if answer == correct_answer:
             num_correct += 1
+    if session.get("user_id"):
+        save_progress(session["user_id"], "Mixed", num_correct, len(user_answers))
     return render_template('score.html', score=num_correct, user_answers=results)
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        email = request.form.get("email", "").strip().lower()
+        password = request.form.get("password", "")
+        if not email or not password:
+            return render_template("register.html", error="Email and password are required.")
+        if not get_db_url():
+            return render_template("register.html", error="Database is not configured.")
+        conn = get_db()
+        with conn:
+            with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                cur.execute("SELECT id FROM users WHERE email = %s;", (email,))
+                if cur.fetchone():
+                    return render_template("register.html", error="Email already registered.")
+                password_hash = generate_password_hash(password)
+                cur.execute(
+                    "INSERT INTO users (email, password_hash) VALUES (%s, %s) RETURNING id;",
+                    (email, password_hash),
+                )
+                user_id = cur.fetchone()["id"]
+        session["user_id"] = user_id
+        session["user_email"] = email
+        return redirect("/progress")
+    return render_template("register.html")
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        email = request.form.get("email", "").strip().lower()
+        password = request.form.get("password", "")
+        if not email or not password:
+            return render_template("login.html", error="Email and password are required.")
+        if not get_db_url():
+            return render_template("login.html", error="Database is not configured.")
+        conn = get_db()
+        with conn:
+            with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                cur.execute("SELECT id, password_hash FROM users WHERE email = %s;", (email,))
+                user = cur.fetchone()
+        if not user or not check_password_hash(user["password_hash"], password):
+            return render_template("login.html", error="Invalid email or password.")
+        session["user_id"] = user["id"]
+        session["user_email"] = email
+        return redirect("/progress")
+    return render_template("login.html")
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect("/")
+
+@app.route('/progress')
+@login_required
+def progress():
+    conn = get_db()
+    with conn:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute(
+                """
+                SELECT difficulty, score, total, created_at
+                FROM progress
+                WHERE user_id = %s
+                ORDER BY created_at DESC
+                LIMIT 50;
+                """,
+                (session["user_id"],),
+            )
+            attempts = cur.fetchall()
+            cur.execute(
+                """
+                SELECT difficulty, COUNT(*) AS attempts, MAX(score) AS best_score, MAX(total) AS total
+                FROM progress
+                WHERE user_id = %s
+                GROUP BY difficulty
+                ORDER BY difficulty;
+                """,
+                (session["user_id"],),
+            )
+            summary = cur.fetchall()
+    return render_template("progress.html", attempts=attempts, summary=summary)
+
+@app.route('/record', methods=['POST'])
+def record():
+    if not session.get("user_id"):
+        return ("", 204)
+    data = request.get_json(silent=True) or {}
+    difficulty = data.get("difficulty", "Unknown")
+    score = data.get("score")
+    total = data.get("total")
+    if score is None or total is None:
+        return jsonify({"error": "Missing score data."}), 400
+    save_progress(session["user_id"], difficulty, int(score), int(total))
+    return jsonify({"ok": True})
+
+def save_progress(user_id, difficulty, score, total):
+    conn = get_db()
+    with conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "INSERT INTO progress (user_id, difficulty, score, total) VALUES (%s, %s, %s, %s);",
+                (user_id, difficulty, score, total),
+            )
 
 def generate_problems(difficulty, num_problems):
     # Level 1 - 2s, 5s, 10s - by 1-10 excl 2,5,10

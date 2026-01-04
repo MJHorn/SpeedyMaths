@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Progress{% endblock %}
+{% block content %}
+  <h1>Your Progress</h1>
+
+  <h2>Summary</h2>
+  <table>
+    <tr>
+      <th>Difficulty</th>
+      <th>Attempts</th>
+      <th>Best Score</th>
+    </tr>
+    {% for row in summary %}
+    <tr>
+      <td>{{ row["difficulty"] }}</td>
+      <td>{{ row["attempts"] }}</td>
+      <td>{{ row["best_score"] }} / {{ row["total"] }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+
+  <h2>Recent Attempts</h2>
+  <table>
+    <tr>
+      <th>Date</th>
+      <th>Difficulty</th>
+      <th>Score</th>
+    </tr>
+    {% for row in attempts %}
+    <tr>
+      <td>{{ row["created_at"] }}</td>
+      <td>{{ row["difficulty"] }}</td>
+      <td>{{ row["score"] }} / {{ row["total"] }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+{% endblock %}

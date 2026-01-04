@@ -55,6 +55,8 @@
             }
         }
 
+        var difficulty = "{{ difficulty }}";
+
         button.addEventListener("click", function(event) {
             clearInterval(timerInterval);
             var totalCorrect = 0;
@@ -72,6 +74,11 @@
                 }
             }
             document.getElementById("myscore").textContent = totalCorrect + " / 40";
+            fetch("/record", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({difficulty: difficulty, score: totalCorrect, total: 40})
+            });
             if (totalCorrect == 40) {
               document.getElementById("popup2").style.display ='block'
             }
