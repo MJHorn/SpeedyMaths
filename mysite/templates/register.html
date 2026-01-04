@@ -2,14 +2,8 @@
 {% block title %}Register{% endblock %}
 {% block content %}
   <h1>Create Account</h1>
-  {% if error %}
-    <p>{{ error }}</p>
-  {% endif %}
-  <form action="/register" method="POST">
-    <label>Email</label>
-    <input type="email" name="email" required>
-    <label>Password</label>
-    <input type="password" name="password" required>
-    <button type="submit">Register</button>
+  <p>Google sign-in only.</p>
+  <form action="/login/google" method="GET">
+    <button type="submit">Continue with Google</button>
   </form>
 {% endblock %}

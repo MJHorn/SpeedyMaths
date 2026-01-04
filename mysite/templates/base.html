@@ -16,8 +16,7 @@
           <a href="/logout">Logout</a>
           <span>{{ current_user_email }}</span>
           {% else %}
-          <a href="/login">Login</a>
-          <a href="/register">Register</a>
+          <a href="/login">Login with Google</a>
           {% endif %}
         </nav>
         <div id="content">{% block content %}{% endblock %}</div>

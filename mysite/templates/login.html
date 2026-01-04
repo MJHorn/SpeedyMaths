@@ -2,14 +2,11 @@
 {% block title %}Login{% endblock %}
 {% block content %}
   <h1>Login</h1>
+  <p>Google sign-in only.</p>
   {% if error %}
     <p>{{ error }}</p>
   {% endif %}
-  <form action="/login" method="POST">
-    <label>Email</label>
-    <input type="email" name="email" required>
-    <label>Password</label>
-    <input type="password" name="password" required>
-    <button type="submit">Login</button>
+  <form action="/login/google" method="GET">
+    <button type="submit">Continue with Google</button>
   </form>
 {% endblock %}

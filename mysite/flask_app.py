@@ -1,15 +1,23 @@
-from flask import Flask, render_template, request, redirect, session, g, jsonify
+from flask import Flask, render_template, request, redirect, session, g, jsonify, url_for
 from decimal import Decimal
 import random
 import os
 import psycopg2
 from psycopg2.extras import RealDictCursor
-from werkzeug.security import generate_password_hash, check_password_hash
 from urllib.parse import urlparse
+from authlib.integrations.flask_client import OAuth
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-key")
 app.config.setdefault("DB_INITIALIZED", False)
+oauth = OAuth(app)
+oauth.register(
+    name="google",
+    client_id=os.environ.get("GOOGLE_CLIENT_ID"),
+    client_secret=os.environ.get("GOOGLE_CLIENT_SECRET"),
+    server_metadata_url="https://accounts.google.com/.well-known/openid-configuration",
+    client_kwargs={"scope": "openid email profile"},
+)
 
 def get_db_url():
     db_url = os.environ.get("DATABASE_URL")
@@ -46,11 +54,12 @@ def init_db():
                     CREATE TABLE IF NOT EXISTS users (
                         id SERIAL PRIMARY KEY,
                         email TEXT UNIQUE NOT NULL,
-                        password_hash TEXT NOT NULL,
+                        password_hash TEXT NOT NULL DEFAULT '',
                         created_at TIMESTAMP DEFAULT NOW()
                     );
                     """
                 )
+                cur.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS google_sub TEXT UNIQUE;")
                 cur.execute(
                     """
                     CREATE TABLE IF NOT EXISTS progress (
@@ -125,50 +134,51 @@ def score():
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
-    if request.method == 'POST':
-        email = request.form.get("email", "").strip().lower()
-        password = request.form.get("password", "")
-        if not email or not password:
-            return render_template("register.html", error="Email and password are required.")
-        if not get_db_url():
-            return render_template("register.html", error="Database is not configured.")
-        conn = get_db()
-        with conn:
-            with conn.cursor(cursor_factory=RealDictCursor) as cur:
-                cur.execute("SELECT id FROM users WHERE email = %s;", (email,))
-                if cur.fetchone():
-                    return render_template("register.html", error="Email already registered.")
-                password_hash = generate_password_hash(password)
-                cur.execute(
-                    "INSERT INTO users (email, password_hash) VALUES (%s, %s) RETURNING id;",
-                    (email, password_hash),
-                )
-                user_id = cur.fetchone()["id"]
-        session["user_id"] = user_id
-        session["user_email"] = email
-        return redirect("/progress")
-    return render_template("register.html")
+    return redirect("/login")
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    if request.method == 'POST':
-        email = request.form.get("email", "").strip().lower()
-        password = request.form.get("password", "")
-        if not email or not password:
-            return render_template("login.html", error="Email and password are required.")
-        if not get_db_url():
-            return render_template("login.html", error="Database is not configured.")
-        conn = get_db()
-        with conn:
-            with conn.cursor(cursor_factory=RealDictCursor) as cur:
-                cur.execute("SELECT id, password_hash FROM users WHERE email = %s;", (email,))
-                user = cur.fetchone()
-        if not user or not check_password_hash(user["password_hash"], password):
-            return render_template("login.html", error="Invalid email or password.")
-        session["user_id"] = user["id"]
-        session["user_email"] = email
-        return redirect("/progress")
     return render_template("login.html")
+
+@app.route("/login/google")
+def login_google():
+    if not os.environ.get("GOOGLE_CLIENT_ID") or not os.environ.get("GOOGLE_CLIENT_SECRET"):
+        return render_template("login.html", error="Google login is not configured.")
+    redirect_uri = url_for("auth_google_callback", _external=True)
+    return oauth.google.authorize_redirect(redirect_uri)
+
+@app.route("/auth/google/callback")
+def auth_google_callback():
+    token = oauth.google.authorize_access_token()
+    userinfo = token.get("userinfo")
+    if not userinfo:
+        userinfo = oauth.google.userinfo()
+    email = (userinfo.get("email") or "").strip().lower()
+    google_sub = userinfo.get("sub")
+    if not email or not google_sub:
+        return render_template("login.html", error="Google login failed.")
+    conn = get_db()
+    with conn:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute("SELECT id, google_sub FROM users WHERE google_sub = %s;", (google_sub,))
+            user = cur.fetchone()
+            if not user:
+                cur.execute("SELECT id, google_sub FROM users WHERE email = %s;", (email,))
+                user = cur.fetchone()
+                if user and not user["google_sub"]:
+                    cur.execute(
+                        "UPDATE users SET google_sub = %s WHERE id = %s;",
+                        (google_sub, user["id"]),
+                    )
+                elif not user:
+                    cur.execute(
+                        "INSERT INTO users (email, password_hash, google_sub) VALUES (%s, %s, %s) RETURNING id;",
+                        (email, "", google_sub),
+                    )
+                    user = cur.fetchone()
+    session["user_id"] = user["id"]
+    session["user_email"] = email
+    return redirect("/progress")
 
 @app.route('/logout')
 def logout():

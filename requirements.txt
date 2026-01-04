@@ -1,6 +1,7 @@
 Cython==3.0.10
 asgiref==3.8.1
 attr==0.3.2
+Authlib==1.3.0
 Babel==2.15.0
 blinker==1.8.2
 ConfigParser==7.0.0
