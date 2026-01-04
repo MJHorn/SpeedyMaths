@@ -86,12 +86,12 @@
 
   <div class="chart-wrap">
     <div class="attempt-scale">
-      <span>Score (0-50)</span>
+      <span>Score (0-40)</span>
     </div>
     <div class="attempt-chart">
       {% for row in attempts|reverse %}
-      <div class="attempt-bar {{ row['difficulty']|lower|replace(' ', '-') }}" style="height: {{ (row['score'] / 50) * 100 }}%;">
-        <span class="bar-label">{{ row["difficulty"] }} {{ row["score"] }}/{{ row["total"] }}</span>
+      <div class="attempt-bar {{ row['difficulty']|lower|replace(' ', '-') }}" style="height: {{ (row['score'] / row['total']) * 100 }}%;">
+        <span class="bar-label">{{ row["difficulty"] }}<br>{{ row["score"] }}/{{ row["total"] }}</span>
       </div>
       {% endfor %}
     </div>
