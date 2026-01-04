@@ -62,15 +62,25 @@
       padding: 0;
     }
 
-    .attempt-scale {
-      display: flex;
-      justify-content: flex-start;
-      font-size: 0.85rem;
-      margin-bottom: 6px;
-    }
-
     .chart-wrap {
       margin-bottom: 4rem;
+    }
+
+    .progress-table {
+      margin: 1rem 0 2rem;
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 12px 6px;
+      text-align: left;
+    }
+
+    .progress-table th {
+      font-size: 1.4rem;
+    }
+
+    .progress-table td {
+      font-size: 1.1rem;
+      padding: 2px 0;
     }
 
     .level-1 { background: #ff8f00; }
@@ -83,9 +93,6 @@
   </style>
 
   <div class="chart-wrap">
-    <div class="attempt-scale">
-      <span>Score (0-40)</span>
-    </div>
     <div class="attempt-chart">
       {% for row in attempts|reverse %}
       <div class="attempt-bar {{ row['difficulty']|lower|replace(' ', '-') }}" style="height: {{ (row['score'] / row['total']) * 100 }}%;">
@@ -101,7 +108,7 @@
   </div>
 
   <h2>Summary</h2>
-  <table>
+  <table class="progress-table">
     <tr>
       <th>Difficulty</th>
       <th>Attempts</th>
@@ -117,7 +124,7 @@
   </table>
 
   <h2>Recent Attempts</h2>
-  <table>
+  <table class="progress-table">
     <tr>
       <th>Date</th>
       <th>Difficulty</th>
