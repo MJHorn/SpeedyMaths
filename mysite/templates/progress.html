@@ -47,21 +47,19 @@
       width: 44px;
       display: inline-block;
       white-space: nowrap;
-      transform: rotate(-60deg);
+      transform: rotate(-60deg) translate(-4px, 10px);
       transform-origin: top left;
-      height: 90px;
     }
 
     .attempt-dates {
       display: flex;
       align-items: flex-start;
       justify-content: flex-start;
-      overflow-x: auto;
-      border-left: 2px solid #333;
-      border-right: 2px solid #333;
-      border-bottom: 2px solid #333;
-      background: #fff;
-      padding: 10px 0 4px;
+      overflow-x: visible;
+      height: 0;
+      border: none;
+      background: transparent;
+      padding: 0;
     }
 
     .attempt-scale {
@@ -72,7 +70,7 @@
     }
 
     .chart-wrap {
-      margin-bottom: 2rem;
+      margin-bottom: 4rem;
     }
 
     .level-1 { background: #ff8f00; }
