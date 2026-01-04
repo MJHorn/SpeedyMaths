@@ -3,6 +3,80 @@
 {% block content %}
   <h1>Your Progress</h1>
 
+  <style>
+    .attempt-chart {
+      display: flex;
+      align-items: flex-end;
+      height: 260px;
+      border: 2px solid #333;
+      background: #fff;
+    }
+
+    .attempt-bar {
+      flex: 1 1 0;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      position: relative;
+      background: #ff8f00;
+      border-right: 1px solid #333;
+    }
+
+    .attempt-bar:last-child {
+      border-right: none;
+    }
+
+    .bar-label {
+      position: absolute;
+      top: 4px;
+      left: 2px;
+      right: 2px;
+      font-size: 0.8rem;
+      text-align: center;
+      color: #111;
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+
+    .bar-date {
+      margin-top: 6px;
+      font-size: 0.75rem;
+      text-align: center;
+      width: 100%;
+      display: block;
+    }
+
+    .attempt-scale {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.85rem;
+      margin-bottom: 6px;
+    }
+
+    .chart-wrap {
+      margin-bottom: 2rem;
+    }
+  </style>
+
+  <div class="chart-wrap">
+    <div class="attempt-scale">
+      <span>0</span>
+      <span>50</span>
+    </div>
+    <div class="attempt-chart">
+      {% for row in attempts %}
+      <div class="attempt-bar" style="height: {{ (row['score'] / 50) * 100 }}%;">
+        <span class="bar-label">{{ row["difficulty"] }}</span>
+      </div>
+      {% endfor %}
+    </div>
+    <div class="attempt-chart">
+      {% for row in attempts %}
+      <span class="bar-date">{{ row["created_at"] }}</span>
+      {% endfor %}
+    </div>
+  </div>
+
   <h2>Summary</h2>
   <table>
     <tr>
