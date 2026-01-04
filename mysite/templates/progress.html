@@ -47,6 +47,9 @@
       width: 44px;
       display: inline-block;
       white-space: nowrap;
+      transform: rotate(-60deg);
+      transform-origin: top left;
+      height: 70px;
     }
 
     .attempt-dates {
@@ -58,12 +61,12 @@
       border-right: 2px solid #333;
       border-bottom: 2px solid #333;
       background: #fff;
-      padding: 6px 0 4px;
+      padding: 10px 0 4px;
     }
 
     .attempt-scale {
       display: flex;
-      justify-content: space-between;
+      justify-content: flex-start;
       font-size: 0.85rem;
       margin-bottom: 6px;
     }
@@ -83,19 +86,18 @@
 
   <div class="chart-wrap">
     <div class="attempt-scale">
-      <span>0</span>
-      <span>50</span>
+      <span>Score (0-50)</span>
     </div>
     <div class="attempt-chart">
-      {% for row in attempts %}
+      {% for row in attempts|reverse %}
       <div class="attempt-bar {{ row['difficulty']|lower|replace(' ', '-') }}" style="height: {{ (row['score'] / 50) * 100 }}%;">
         <span class="bar-label">{{ row["difficulty"] }}</span>
       </div>
       {% endfor %}
     </div>
     <div class="attempt-dates">
-      {% for row in attempts %}
-      <span class="bar-date">{{ row["created_at"].strftime("%d/%m %H:%M") }}</span>
+      {% for row in attempts|reverse %}
+      <span class="bar-date">{{ row["created_at"].strftime("%d/%m") }}</span>
       {% endfor %}
     </div>
   </div>
