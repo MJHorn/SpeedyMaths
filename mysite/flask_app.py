@@ -5,6 +5,7 @@ import os
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from werkzeug.security import generate_password_hash, check_password_hash
+from urllib.parse import urlparse
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-key")
@@ -23,7 +24,7 @@ def get_db():
         db_url = get_db_url()
         if not db_url:
             raise RuntimeError("DATABASE_URL is not set.")
-        g.db = psycopg2.connect(db_url, sslmode="require")
+        g.db = psycopg2.connect(db_url, sslmode=get_sslmode(db_url))
     return g.db
 
 @app.teardown_appcontext
@@ -36,7 +37,7 @@ def init_db():
     db_url = get_db_url()
     if not db_url:
         return
-    conn = psycopg2.connect(db_url, sslmode="require")
+    conn = psycopg2.connect(db_url, sslmode=get_sslmode(db_url))
     try:
         with conn:
             with conn.cursor() as cur:
@@ -77,9 +78,15 @@ def login_required(view_func):
 def inject_current_user():
     return {"current_user_email": session.get("user_email")}
 
+def get_sslmode(db_url):
+    parsed = urlparse(db_url)
+    if parsed.hostname in ("localhost", "127.0.0.1"):
+        return "disable"
+    return "require"
+
 @app.before_request
 def before_request():
-    if request.headers.get('X-Forwarded-Proto', 'http') == 'http':
+    if request.headers.get('X-Forwarded-Proto', 'http') == 'http' and not request.host.startswith(("127.0.0.1", "localhost")):
         url = request.url.replace('http://', 'https://', 1)
         return redirect(url, code=301)
     if not app.config["DB_INITIALIZED"]:
