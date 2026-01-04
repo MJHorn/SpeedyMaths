@@ -45,7 +45,7 @@ def generate_problems(difficulty, num_problems):
     # Level 3 - 2s, 3s, 4s, 5s, 6s, 9s, 10s
     # Level 4 - 2s, 3s, 4s, 5s, 6s, 7s, 8s, 9s, 10s
     # Level 5 - 2s, 3s, 4s, 5s, 6s, 7s, 8s, 9s, 10s, 11s, 12s
-    # Level 6 - 10^n x the above (0.05 x 120, 3000x1.1)
+    # Level 6 - extra hard decimals (0.01-100 scale) with 2s-15s
     problems = []
     levelproblems = {}
     levelproblems['Level 1'] = [[m, n] for m in [2,5,10] for n in range(1, 11)]
@@ -53,6 +53,7 @@ def generate_problems(difficulty, num_problems):
     levelproblems['Level 3'] = [[m, n] for m in [2,3,4,5,6,9,10,11] for n in range(1, 11)]
     levelproblems['Level 4'] = [[m, n] for m in [2,3,4,5,6,7,8,9,10,11,12] for n in range(1, 13)]
     levelproblems['Level 5'] = [[Decimal(10)**a*Decimal(m), Decimal(10)**b*Decimal(n)] for m in [2,3,4,5,6,7,8,9,10,11,12] for n in range(1, 13) for a in range(-1,2) for b in range(-1,2)]
+    levelproblems['Level 6'] = [[Decimal(10)**a*Decimal(m), Decimal(10)**b*Decimal(n)] for m in [2,3,4,5,6,7,8,9,10,11,12,13,14,15] for n in range(1, 16) for a in range(-2,3) for b in range(-2,3)]
 
     # previousProblem = []
     problemSet = levelproblems[difficulty].copy()
@@ -86,4 +87,3 @@ def mark_problems(user_answers):
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port, debug=False)
-
