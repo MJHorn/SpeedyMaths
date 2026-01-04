@@ -8,6 +8,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-key")
+app.config.setdefault("DB_INITIALIZED", False)
 
 def get_db_url():
     db_url = os.environ.get("DATABASE_URL")
@@ -64,10 +65,6 @@ def init_db():
     finally:
         conn.close()
 
-@app.before_first_request
-def setup_database():
-    init_db()
-
 def login_required(view_func):
     def wrapped(*args, **kwargs):
         if not session.get("user_id"):
@@ -85,6 +82,9 @@ def before_request():
     if request.headers.get('X-Forwarded-Proto', 'http') == 'http':
         url = request.url.replace('http://', 'https://', 1)
         return redirect(url, code=301)
+    if not app.config["DB_INITIALIZED"]:
+        init_db()
+        app.config["DB_INITIALIZED"] = True
 
 @app.route('/')
 def home():
