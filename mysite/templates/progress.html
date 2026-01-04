@@ -11,7 +11,12 @@
       height: 240px;
       border: 2px solid #333;
       background: #fff;
+      overflow-x: visible;
+    }
+
+    .attempt-scroll {
       overflow-x: auto;
+      padding-bottom: 6px;
     }
 
     .attempt-bar {
@@ -66,12 +71,14 @@
       display: flex;
       align-items: flex-start;
       justify-content: flex-start;
-      overflow-x: auto;
+      overflow-x: visible;
       height: 140px;
       border: none;
       background: transparent;
       padding: 0;
       margin-top: 20px;
+      border-left: 2px solid transparent;
+      border-right: 2px solid transparent;
     }
 
     .chart-wrap {
@@ -105,17 +112,19 @@
   </style>
 
   <div class="chart-wrap">
-    <div class="attempt-chart">
-      {% for row in attempts|reverse %}
-      <div class="attempt-bar {{ row['difficulty']|lower|replace(' ', '-') }}{% if (row['score'] / row['total']) < 0.25 %} short-bar{% endif %}" style="height: {{ (row['score'] / row['total']) * 100 }}%;">
-        <span class="bar-label">{{ row["difficulty"] }}<br>{{ row["score"] }}/{{ row["total"] }}</span>
+    <div class="attempt-scroll">
+      <div class="attempt-chart">
+        {% for row in attempts|reverse %}
+        <div class="attempt-bar {{ row['difficulty']|lower|replace(' ', '-') }}{% if (row['score'] / row['total']) < 0.25 %} short-bar{% endif %}" style="height: {{ (row['score'] / row['total']) * 100 }}%;">
+          <span class="bar-label">{{ row["difficulty"] }}<br>{{ row["score"] }}/{{ row["total"] }}</span>
+        </div>
+        {% endfor %}
       </div>
-      {% endfor %}
-    </div>
-    <div class="attempt-dates">
-      {% for row in attempts|reverse %}
-      <span class="bar-date">{{ row["created_at"].strftime("%d/%m") }}</span>
-      {% endfor %}
+      <div class="attempt-dates">
+        {% for row in attempts|reverse %}
+        <span class="bar-date">{{ row["created_at"].strftime("%d/%m") }}</span>
+        {% endfor %}
+      </div>
     </div>
   </div>
 
