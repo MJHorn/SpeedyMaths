@@ -8,20 +8,19 @@
       display: flex;
       align-items: flex-end;
       justify-content: flex-start;
-      height: 260px;
+      height: 220px;
       border: 2px solid #333;
       background: #fff;
       overflow-x: auto;
     }
 
     .attempt-bar {
-      flex: 0 0 36px;
-      min-width: 36px;
+      flex: 0 0 44px;
+      min-width: 44px;
       display: flex;
       align-items: flex-end;
       justify-content: center;
       position: relative;
-      background: #ff8f00;
       border-right: 1px solid #333;
     }
 
@@ -45,9 +44,21 @@
       margin-top: 6px;
       font-size: 0.9rem;
       text-align: center;
-      width: 36px;
+      width: 44px;
       display: inline-block;
       white-space: nowrap;
+    }
+
+    .attempt-dates {
+      display: flex;
+      align-items: flex-start;
+      justify-content: flex-start;
+      overflow-x: auto;
+      border-left: 2px solid #333;
+      border-right: 2px solid #333;
+      border-bottom: 2px solid #333;
+      background: #fff;
+      padding: 6px 0 4px;
     }
 
     .attempt-scale {
@@ -60,6 +71,14 @@
     .chart-wrap {
       margin-bottom: 2rem;
     }
+
+    .level-1 { background: #ff8f00; }
+    .level-2 { background: #ffa726; }
+    .level-3 { background: #fb8c00; }
+    .level-4 { background: #f57c00; }
+    .level-5 { background: #ef6c00; }
+    .level-6 { background: #e65100; }
+    .mixed { background: #ffb300; }
   </style>
 
   <div class="chart-wrap">
@@ -69,12 +88,12 @@
     </div>
     <div class="attempt-chart">
       {% for row in attempts %}
-      <div class="attempt-bar" style="height: {{ (row['score'] / 50) * 100 }}%;">
+      <div class="attempt-bar {{ row['difficulty']|lower|replace(' ', '-') }}" style="height: {{ (row['score'] / 50) * 100 }}%;">
         <span class="bar-label">{{ row["difficulty"] }}</span>
       </div>
       {% endfor %}
     </div>
-    <div class="attempt-chart">
+    <div class="attempt-dates">
       {% for row in attempts %}
       <span class="bar-date">{{ row["created_at"].strftime("%d/%m %H:%M") }}</span>
       {% endfor %}
