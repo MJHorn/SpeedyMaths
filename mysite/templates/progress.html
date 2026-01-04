@@ -33,7 +33,7 @@
       top: 4px;
       left: 2px;
       right: 2px;
-      font-size: 0.95rem;
+      font-size: 1.05rem;
       text-align: center;
       color: #111;
       font-weight: bold;
@@ -42,14 +42,14 @@
 
     .bar-date {
       margin-top: 6px;
-      font-size: 0.9rem;
+      font-size: 1.1rem;
       text-align: center;
       width: 44px;
       display: inline-block;
       white-space: nowrap;
       transform: rotate(-60deg);
       transform-origin: top left;
-      height: 70px;
+      height: 90px;
     }
 
     .attempt-dates {
@@ -91,7 +91,7 @@
     <div class="attempt-chart">
       {% for row in attempts|reverse %}
       <div class="attempt-bar {{ row['difficulty']|lower|replace(' ', '-') }}" style="height: {{ (row['score'] / 50) * 100 }}%;">
-        <span class="bar-label">{{ row["difficulty"] }}</span>
+        <span class="bar-label">{{ row["difficulty"] }} {{ row["score"] }}/{{ row["total"] }}</span>
       </div>
       {% endfor %}
     </div>
