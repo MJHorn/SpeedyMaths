@@ -1,4 +1,16 @@
-.python/
+# Ignore OS/System junk
+.cache/
+.ipython/
+.local/
+.vscode/
+.bashrc
+.gitconfig
+.profile
+.pythonstartup.py
+.vimrc
 
-__pycache__/
-*.pyc
+# Ignore Python virtual environments
+.virtualenvs/
+myenv/
+venv/
+ENV/
