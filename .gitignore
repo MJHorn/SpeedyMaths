@@ -9,8 +9,14 @@
 .pythonstartup.py
 .vimrc
 
-# Ignore Python virtual environments
+# Ignore Python virtual environments / runtime directories
+.python/
 .virtualenvs/
 myenv/
 venv/
 ENV/
+
+# Ignore Python compiled/cache files
+__pycache__/
+*.py[cod]
+*$py.class
