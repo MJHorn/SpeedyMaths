@@ -9,16 +9,9 @@
     {% endblock %}
   </head>
   <body>
-        <nav>
-          <a href="/">Home</a>
-          {% if current_user_email %}
-          <a href="/progress">Progress</a>
-          <a href="/logout">Logout</a>
-          <span>{{ current_user_email }}</span>
-          {% else %}
-          <a href="/login">Login with Google</a>
-          {% endif %}
-        </nav>
-        <div id="content">{% block content %}{% endblock %}</div>
+    <nav>
+      <a href="/">Home</a>
+    </nav>
+    <div id="content">{% block content %}{% endblock %}</div>
   </body>
 </html>
