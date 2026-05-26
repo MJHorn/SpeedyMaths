@@ -8,11 +8,6 @@ app = Flask(__name__)
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-key")
 
-@app.before_request
-def before_request():
-    if request.headers.get('X-Forwarded-Proto', 'http') == 'http' and not request.host.startswith(("127.0.0.1", "localhost")):
-        url = request.url.replace('http://', 'https://', 1)
-        return redirect(url, code=301)
 
 @app.route('/')
 def home():
