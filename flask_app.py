@@ -7,7 +7,10 @@ from psycopg2.extras import RealDictCursor
 from urllib.parse import urlparse
 from authlib.integrations.flask_client import OAuth
 
+from werkzeug.middleware.proxy_fix import ProxyFix
+
 app = Flask(__name__)
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-key")
 app.config.setdefault("DB_INITIALIZED", False)
 oauth = OAuth(app)
@@ -88,6 +91,11 @@ def inject_current_user():
     return {"current_user_email": session.get("user_email")}
 
 def get_sslmode(db_url):
+    # Allow overriding via environment variable (e.g. set to "disable" in Coolify)
+    env_ssl = os.environ.get("DB_SSLMODE")
+    if env_ssl:
+        return env_ssl
+        
     parsed = urlparse(db_url)
     if parsed.hostname in ("localhost", "127.0.0.1"):
         return "disable"
